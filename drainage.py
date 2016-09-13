@@ -59,19 +59,25 @@ class Drainage(object):
 
   def modelClimate(self):
     self.climate.define_some_lists(self)
+    self.climate.resample_ice(self)
     self.climate.runoff_input_meteoric(self)
     self.climate.runoff_input_ice(self)
     self.climate.runoff_input_total(self)
 
-  def modelDrainageSetup(self):
+  def truncate_ages(self):
     """
-    Compute drainage
     Removing first time-step because we cannot calculate drainage routing at first ice time-step
     (No earlier dH_i/dt; and assuming for modern that dH_i/dt is constant... which is becoming
     not true, but not yet on a glacial cycle magnitude
     """
+    # Trim first entry
     self.ages = self.ages[1:] # IMPORTANT! Should have this inside the functions, but hasn't been too much of a problem out here yet
     self.ages_numeric = self.ages_numeric[1:]
+    
+  def modelDrainageSetup(self):
+    """
+    Compute drainage
+    """
     self.dt_numeric = np.diff(self.ages_numeric[::-1])[::-1] # update
     self.dt = self.dt_numeric.astype(str)
     self.midpoint_age = self.midpoint_age[1:] # first ts removed here as well
@@ -128,8 +134,8 @@ class Drainage(object):
     self.compute_drainage.basin_discharge(self)
     #self.compute_drainage.basin_ice_volume(self)
     
-  def modelOutput(self):
+  def modelOutput(self, save=True):
     self.ICE = grass.parse_command('g.gisenv')['LOCATION_NAME']
     self.ICE = re.findall("[a-zA-Z0-9]+", self.ICE)[0]
-    self.output.basin_discharge_plots(self, save=True)
+    self.output.basin_discharge_plots(self, save=save)
 

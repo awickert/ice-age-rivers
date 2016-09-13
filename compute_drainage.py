@@ -109,12 +109,12 @@ def separate_oceans(self):
     grass.run_command('r.null', map=notocean_only, setnull='0') # Turns ocean to null
     # Just in case the ocean binary is somehow lacking ocean -- change this to 0!
     # This is really just a patch for something that came up while doing this on a global scale
-    for age in self.ages:
-      grass.run_command('r.null', map='ocean_binary_'+age, null='0') # Turns ocean to null
+    #for age in self.ages:
+    grass.run_command('r.null', map='ocean_binary_'+age, null='0') # Turns ocean to null
 
     print "Converting notocean_only maps to vector..."
 
-  for age in self.ages:
+    #for age in self.ages:
     print age
     notocean_only="notocean_only_" + age
     grass.run_command('r.to.vect', input=notocean_only, output=notocean_only, type_='area', overwrite=True)
@@ -154,8 +154,10 @@ def apply_etopo2_colormap(self):
   for age in self.ages:
     tpi = 'tpi_' + age # "topo plus ice"
     tpin = 'tpin_' + age # "topo plus ice, no-ocean"
+    #topo = 'topo_' + age # "topo without ice" -- already etopo2
     grass.run_command('r.colors', map=tpi, color='etopo2')
     grass.run_command('r.colors', map=tpin, color='etopo2')
+    #grass.run_command('r.colors', map=topo, color='etopo2')
 
 # 3.5: flow routing
 def flow_routing_r_watershed(self):
@@ -467,8 +469,22 @@ def build_basins_rast(self, river_name=None):
   # Before anything, define an array object
   #dbrast = garray.array()
   # First get list of all possible basins and assign numbers to them
+  
+  """
+  # This is my new way of doing this -- numbers were getting confused
+  # before!
+  # But I'm reverting to old way for the moment to see if I wrote something
+  # that keeps everything consistent between functions
+  rmr_columns =  np.array(grass.vector_db_select('river_mouth_regions')['columns'])
+  rmr_values = np.array(grass.vector_db_select('river_mouth_regions')['values'].values())
+  self.rivers = rmr_values[:, rmr_columns=='river'].squeeze()
+  self.rnum = rmr_values[:, rmr_columns=='rnum'].squeeze().astype(int)
+  """
+
   self.rivers = np.array(list(set(list(grass.parse_command('v.db.select', map='river_mouth_regions', columns='river', flags="c")))))
+  #self.rnum = np.array(list(set(list(grass.parse_command('v.db.select', map='river_mouth_regions', columns='rnum', flags="c"))))).astype(int).astype(int)
   self.rnum = np.arange(1,len(self.rivers)+1)
+
   grass.run_command('g.region', rast='ice_000000') # Just in case it was changed while running the code before
   # Then build basins
   for age in self.ages:
@@ -536,7 +552,10 @@ def build_basins_rast(self, river_name=None):
         rivercat.pop(ind)
         Q.pop(ind)
     # Build grid
-    grass.mapcalc(drainage_basins+' = 0', overwrite=True) # Start with zeros
+    if river_name is None:
+      grass.mapcalc(drainage_basins+' = 0', overwrite=True) # Start with zeros
+    else:
+      grass.run_command('r.null', map=drainage_basins, null=0) # Start with zeros outside of basins
     reg = grass.region()
     res = reg['nsres'] # NS and EW the same
     dmax = res/2. # not really used anymore
@@ -660,16 +679,27 @@ def basins_to_null_int(self):
 
 
 def add_basins_rast(self):
+  """
+  Adds drainage basins to regions that do not yet have a drainage basin.
+  (These are defined by rivers not listed in the database attached to the
+  drainage basin vector map.)
+  Picks the highest discharge coastal cell as the river mouth.
+  Programmed to try to avoid regions that already have a drainage basin
+  (i.e. to avoid duplication, and (haven't checked code) potential raster math
+  that would end up in doubled values for the rivers)
+  """
   from grass.script import vector as vect
   # Just get highest flow accum cell in area if there is nothing otherwise
   # (keep Q=0 away).
   # Next 3 lines copied from below
   self.rivers = np.array(list(set(list(grass.parse_command('v.db.select', map='river_mouth_regions', columns='river', flags="c")))))
   self.rnum = np.arange(1,len(self.rivers)+1)
+  #self.rnum = np.arange(1,len(self.rivers)+1)
   # Prepare a new river mouth regions raster
   grass.run_command('v.db.addcolumn', map='river_mouth_regions', col='rnum double precision')
   for i in range(len(self.rivers)):
     grass.run_command('v.db.update', map='river_mouth_regions', column='rnum', value=self.rnum[i], where='river == "'+self.rivers[i]+'"')
+  grass.run_command('g.region', vect='river_mouth_regions')
   grass.run_command('v.to.rast', input='river_mouth_regions', output='river_mouth_regions_by_number', use='attr', attrcolumn='rnum', overwrite=True)
   for age in self.ages: #['008500', '006500', '005500', '005000', '003500', '003000', '002500']:
     #self.ages:#[21:23]: #self.ages[16:20]:#
@@ -680,6 +710,7 @@ def add_basins_rast(self):
     drainage_basins = 'drainage_basins_' + age
     flowdir = 'flowdir_' + age
     accumulation = 'accumulation_' + age
+    ocean_plus_shore = 'ocean_plus_shore_' + age
     # Get an array of rivers that have drainage basins provided already w/ the 1000 cumec cutoff
     drainage_basins = 'drainage_basins_' + age
     drainage_basins_cols = vect.vector_db_select(drainage_basins)['columns']
@@ -691,8 +722,9 @@ def add_basins_rast(self):
       if any(self.drainage_basins_rivernames == rivername):
         print rivername, "is all set."
       else:
-        print rivername, "basin doesn't have a big enough river (1000 cumec in GCM + ICE-5G)."
-        print "Picking the cell with highest discharge inside its mouth region's bounding box."
+        print rivername, "basin doesn't have a big enough river (1000 cumec in GCM + ice)."
+        print "Picking the cell with highest discharge inside its mouth region's"
+        print "bounding box, and along the coast."
         if first_round:
           print "Changing nulls to 0 to amalgamate basins"
           grass.run_command('r.null', map=drainage_basins, null=0)
@@ -702,6 +734,7 @@ def add_basins_rast(self):
         # Get full region for full resolution
         fullres = grass.region()['nsres'] # Assume NS and EW res are the same
         # Then find the largest discharge inside this bounding box
+        # and on the coast.
         grass.run_command('g.region', vect='tmp', quiet=True)
         # Change bounding box edges so cells are sure to fall in right place
         smreg = grass.region()
@@ -717,19 +750,26 @@ def add_basins_rast(self):
           #print tmpbound, 'degrees'
         grass.run_command('g.region', n=fixreg['n'], s=fixreg['s'], w=fixreg['w'], e=fixreg['e'])
         # mapcalc( "tmp = (river_mouth_regions" == "+this_river_number+") * "+accumulation, overwrite=True)
-        rmr_specific = garray.array()
-        rmr_specific.read(accumulation)
+        accumulation_in_and_around_rmr = garray.array()
+        accumulation_in_and_around_rmr.read(accumulation)
         # Compute inside GRASS the region occupied by the river_mouth_regions vector
-        rmr_more_specific = garray.array()
-        rmr_more_specific.read('river_mouth_regions_by_number') # 1 in defined regions, 0 (or NULL) elsewhere (generated ouside of this script)
+        rmrs = garray.array()
+        rmrs.read('river_mouth_regions_by_number') # 1 in defined regions, 0 (or NULL) elsewhere (generated ouside of this script)
+        # Ensure that this is not already defined as part of a drainage basin
         not_other_basin = garray.array()
         not_other_basin.read(drainage_basins)
         not_other_basin[self.rnum[self.rivers == rivername]] = 0
-        rmr_specific[...] *= (rmr_more_specific == self.rnum[self.rivers == rivername]) * (not_other_basin == 0)
-        maxval = float(np.max(np.abs(rmr_specific)))
-        if maxval > 0:
-          rmr_specific[...] = 1. * (np.abs(rmr_specific) == maxval)
-          rmr_specific.write('tmp_mouth', overwrite=True)
+        # Ensure that it is on the coast
+        coastal_areas = garray.array()
+        coastal_areas.read(ocean_plus_shore, null=np.nan)
+        # Combine these together to limit the possible selection area.
+        accumulation_rmr = garray.array()
+        accumulation_rmr[...] = accumulation_in_and_around_rmr * (rmrs == self.rnum[self.rivers == rivername]) * (not_other_basin == 0) * (coastal_areas == 0)
+        maxval = float(np.max(np.abs(accumulation_rmr)))
+        if maxval != 0:
+          # Pick +/- extreme value for river mouth
+          accumulation_rmr[...] = 1. * (np.abs(accumulation_rmr) == maxval)
+          accumulation_rmr.write('tmp_mouth', overwrite=True)
           # Obtain a point and its coordinates, from which drainage basin will be built
           grass.run_command('r.null', map='tmp_mouth', setnull=0, quiet=True)
           print "Creating point at mouth"
@@ -786,8 +826,10 @@ def add_basins_rast(self):
     else:
       print "Returning NULL values to maps."
       grass.run_command('r.null', map=drainage_basins, setnull=0)
+      grass.run_command('g.region', rast='topo_000000')
 
 def build_basins_vect(self):
+  grass.run_command('g.region', rast='topo_000000')
   self.rivers = np.array(list(set(list(grass.parse_command('v.db.select', map='river_mouth_regions', columns='river', flags="c")))))
   self.rnum = np.arange(1,len(self.rivers)+1)
   f = open('/tmp/rivers', 'w')
@@ -797,6 +839,8 @@ def build_basins_vect(self):
   f.close()
   for age in self.ages:
     print age
+    grass.run_command('g.region', rast='topo_000000')
+    grass.run_command('g.region', w=-180, e=180) # Added this because of prime meridian issue with Rhine and Seine
     drainage_basins = 'drainage_basins_' + age
     # Attach categories and convert to vector
     grass.run_command('r.category', map=drainage_basins, rules='/tmp/rivers')
@@ -826,8 +870,7 @@ def basin_discharge(self):
   self.river_names = list(np.array(rmr_lol)[:,river_name_column])
   # Include self.rivers - redundant but used (and rnum is needed)
   self.rivers = np.array(list(set(list(grass.parse_command('v.db.select', map='river_mouth_regions', columns='river', flags="c")))))
-  self.rnum = np.arange(1, len(self.rivers)+1)
-
+  self.rnum = np.arange(1,len(self.rivers)+1)
   # Rasterize the river mouth regions for later extraction of discharge data
   # grass.run_command('v.to.rast', 
   # Nah, just find largest in bounding box
@@ -852,12 +895,15 @@ def basin_discharge(self):
   # that I am using now. In fact, it's not even the same thing that I am using
   # later -- and look for Q_meteoric_simulated_now.txt.
   Qmodern = dict(Mississippi=18434., Mackenzie=9910., Colorado=610., Rio_Grande=200., Hudson=606., Columbia=7500., Susquehanna=318., Saint_Lawrence=16800., Hudson_Strait=2800., Yukon=6428.)
-  Qnormalization = dict(Mississippi=1., Mackenzie=1., Colorado=1., Rio_Grande=1., Hudson=1., Columbia=1., Susquehanna=1., Saint_Lawrence=1., Hudson_Strait=1., Yukon=1., Other_North=1., Barents=1., White_Sea=1., Kara_Northwest=1., Kara_Southeast=1., Daugava_and_Baltic=1., Vefsnfjord=1., Puget_Sound=1., Volga=1., Canadian_Cordillera=1., Newfoundland_and_Labrador=1., Skeena=1.) # Start with this but be sure to update every item!
+  Qnormalization = dict(Mississippi=1., Mackenzie=1., Colorado=1., Rio_Grande=1., Hudson=1., Columbia=1., Susquehanna=1., Saint_Lawrence=1., Hudson_Strait=1., Yukon=1., Other_North=1., Barents=1., White_Sea=1., Kara_Northwest=1., Kara_Southeast=1., Daugava_and_Baltic=1., Vefsnfjord=1., Puget_Sound=1., Volga=1., Canadian_Cordillera=1., Newfoundland_and_Labrador=1., Skeena=1., Huang_He=1., Amur=1., Rhone=1., Po=1., Lena=1., Amazon=1., Rhine_and_Seine=1., Ganga_Brahmaputra=1., Nile=1., Yangtze=1., Niger=1.) # Start with this but be sure to update every item! And update Rhine and Seine to Rhine / English Channel
   # Go from present backwards, so I can get the modern normalization in place 
   # first
   # No Q_t (Q_total) here yet because of the need to re-normalize discharge
   # Something I wrote here prevents rivers outside the domain from being included in the table...
   # ... but not sure what it is! Maybe one of the try/excepts.
+  print ""
+  print "NOTE: only checking for the drainages listed in Qnormalization"
+  print ""
   for age in self.ages[::-1]:#(self.ages[1:4] + [self.ages[-1]])[::-1]:
     print age
     drainage_basins = 'drainage_basins_' + age
@@ -867,6 +913,7 @@ def basin_discharge(self):
     grass.run_command('v.to.db', map=drainage_basins, option='area', units='kilometers', columns="Area_km2")  
     # Insert modern discharge
     for rivername in self.river_names:
+      #if rivername in Qmodern.keys(): # BREAKS COUNTER!
       rnu = rivername.replace(' ', '_') # Underscore for dict
       print rivername
       #if grass.parse_command('v.db.select', map=drainage_basins, column=
@@ -901,6 +948,7 @@ def basin_discharge(self):
         
       if len(Q_m) == 0:
         print rivername, "too small; using its highest Q cell"
+        print "Assuming only meteoric water -- not true in general (shortcut)"
         # rnum = river number
         #this_river_number = str(self.rnum[(self.rivers)==rivername][0]) # not really needed anymore
         # Extract the portion of river_mouth_regions for this river
@@ -908,10 +956,10 @@ def basin_discharge(self):
         # Then find the largest discharge inside this bounding box
         grass.run_command('g.region', vect='tmp', quiet=True)
         # mapcalc( "tmp = (river_mouth_regions" == "+this_river_number+") * "+accumulation, overwrite=True)
-        rmr_specific = garray.array()
-        rmr_specific.read(accumulation)
+        accumulation_rmr = garray.array()
+        accumulation_rmr.read(accumulation)
         # Assuming that the tiny basins must be meteoric-only; not generally true, but almost always is
-        Q_m.append(float(np.max(rmr_specific)))
+        Q_m.append(float(np.max(accumulation_rmr)))
         grass.run_command('g.region', rast='ice_000000', quiet=True)
 
       Q_i = sum(Q_i) # 0 if no items - perfect!
@@ -928,12 +976,15 @@ def basin_discharge(self):
 
       # Update proper columns with discharge values
       # Maybe I should have non-normalized values like these here
-      grass.run_command('v.db.update', map=drainage_basins, column='Q_ice', where="river="+'"'+rivername+'"', value=Q_i)
-      grass.run_command('v.db.update', map=drainage_basins, column='Q_meteoric_uncorrected', where="river="+'"'+rivername+'"', value=Q_m)
-      #grass.run_command('v.db.update', map=drainage_basins, column='Q_meteoric', where="river="+'"'+rivername+'"', value=Q_m)
-      #grass.run_command('v.db.update', map=drainage_basins, column='Q_total', where="river="+'"'+rivername+'"', value=Q_m + Q_i)
-      grass.run_command('v.db.update', map=drainage_basins, column='Q_meteoric', where="river="+'"'+rivername+'"', value=Q_m * Qnormalization[rnu])
-      grass.run_command('v.db.update', map=drainage_basins, column='Q_total', where="river="+'"'+rivername+'"', value=Q_m * Qnormalization[rnu] + Q_i)
+      try:
+        grass.run_command('v.db.update', map=drainage_basins, column='Q_ice', where="river="+'"'+rivername+'"', value=Q_i)
+        grass.run_command('v.db.update', map=drainage_basins, column='Q_meteoric_uncorrected', where="river="+'"'+rivername+'"', value=Q_m)
+        #grass.run_command('v.db.update', map=drainage_basins, column='Q_meteoric', where="river="+'"'+rivername+'"', value=Q_m)
+        #grass.run_command('v.db.update', map=drainage_basins, column='Q_total', where="river="+'"'+rivername+'"', value=Q_m + Q_i)
+        grass.run_command('v.db.update', map=drainage_basins, column='Q_meteoric', where="river="+'"'+rivername+'"', value=Q_m * Qnormalization[rnu])
+        grass.run_command('v.db.update', map=drainage_basins, column='Q_total', where="river="+'"'+rivername+'"', value=Q_m * Qnormalization[rnu] + Q_i)
+      except:
+        print "No update to database possible for", rivername
       
       print ''
 
@@ -970,6 +1021,7 @@ def basin_ice_volume(self):
     ice_volume = ice_thickness_array/1E3 * km_squared # km^3
     for river in self.rivers:
       rnu = river.replace(' ', '_') # Underscore for dict
+      rnu = rnu.replace('-', '_') # Underscore for dict
       print river
       river_number = self.rnum[self.rivers == river]
       V_ice_km3_in_basin = np.sum(ice_volume * (drainage_basins_array == river_number)) # km^3

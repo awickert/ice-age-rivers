@@ -10,21 +10,20 @@ EnhancedQ = {      'Susquehanna River':          np.array([[26.5, 19.9],
 
                    'Saint Lawrence River':       np.array([[12.8,  8.8]]),
 
-                   'Mackenzie River':            np.array([[13.6,  11.5],
-                                                           [10.8,  10.7]]),
+                   'Mackenzie River':            np.array([[13.6,  11.5]]),
 
                    'Mississippi River':          np.array([[26.5, 19.9],
                                                            [19.3, 18.8],
                                                            [18.4, 15.9],
                                                            [13.6, 12.8],
-                                                           [11.7, 11.6],
-                                                           [10.8, 10.7]]),
+                                                           [11.8, 11.3],
+                                                           [11.0, 10.6]]),
 
-                   'Hudson Strait':              np.array([[25.7, 24.0],
-                                                           [18.2, 17.7],
-                                                           [12.8, 12.3],
-                                                           [11.4, 10.9],
-                                                           [10.0,  9.4],
+                   'Hudson Strait':              np.array([[16.8, 16.3],
+                                                           [15.9, 15.7],
+                                                           [11.5, 11.3],
+                                                           [11.0, 10.6],
+                                                           [9.7,  9.2],
                                                            [8.65, 8.55],
                                                            [8.25, 8.15]]),
 
@@ -37,6 +36,27 @@ EnhancedQ = {      'Susquehanna River':          np.array([[26.5, 19.9],
                                                            [12.9, 11.7]])
 }
 
+# OLD H0 AGES (and H1 and more)
+# New 11.5-11.3 H1 + 11.4-10.9 Ungava Bay
+#                   'Hudson Strait':              np.array([[25.7, 24.0],
+#                                                           [18.2, 17.7],
+#                                                           [12.8, 12.3],
+#                                                           [11.4, 10.9],
+#                                                           [10.0,  9.4],
+#                                                           [8.65, 8.55],
+#                                                           [8.25, 8.15]]),
+#
+#                   'Mackenzie River':            np.array([[13.6,  11.5],
+#                                                           [10.8,  10.7]]),
+#
+#                   'Mississippi River':          np.array([[26.5, 19.9],
+#                                                           [19.3, 18.8],
+#                                                           [18.4, 15.9],
+#                                                           [13.6, 12.8],
+#                                                           [11.7, 11.6],
+#                                                           [10.8, 10.7]]),
+#
+
 # Generalized enhanced discharge: smoothes over general times when there should
 # have been more discharge than at present
 Enh_Q_gen = {      'Susquehanna River':          np.array([[26.5, 19.9],
@@ -48,13 +68,18 @@ Enh_Q_gen = {      'Susquehanna River':          np.array([[26.5, 19.9],
 
                    'Saint Lawrence River':       np.array([[12.8,  8.8]]),
 
-                   'Mackenzie River':            np.array([[15.6,  9.3]]),
+                   'Mackenzie River':            np.array([[15.6,  11.0]]),
 
-                   'Mississippi River':          np.array([[26.5, 12.8]]),
+                   'Mississippi River':          np.array([[26.5, 12.8],
+                                                           [11.8, 11.3],
+                                                           [11.0, 10.6]]),
 
-                   'Hudson Strait':              np.array([[25.7, 24.0],
-                                                           [18.2, 17.7],
-                                                           [12.8, 8.2]]),
+                   'Hudson Strait':              np.array([[16.8, 16.3],
+                                                           [15.9, 15.7],
+                                                           [11.5, 11.3],
+                                                           [11.0, 10.6],
+                                                           [9.7,  8.0],
+                                                           [7.55,  7.35]]),
 
                    'Columbia River':             np.array([[36.1, 10.6]]),
 
@@ -65,6 +90,18 @@ Enh_Q_gen = {      'Susquehanna River':          np.array([[26.5, 19.9],
                                                            [12.9, 11.7]])
 }
 
+# OLD H0 AGES (and H1 and more)
+#                   'Hudson Strait':              np.array([[25.7, 24.0],
+#                                                           [18.2, 17.7],
+#                                                           [12.8, 8.2]]),
+#
+#                   'Mackenzie River':            np.array([[15.6,  9.3]]),
+#
+#                   'Hudson Strait':              np.array([[16.8, 16.3],
+#                                                           [15.9, 15.7],
+#                                                           [11.5, 8.15]]),
+#
+
 Qmodern = dict(Mississippi=18430., Mackenzie=9910., Colorado=665., Rio_Grande=150., Hudson=620., Columbia=7500., Susquehanna=1082., Saint_Lawrence=12000., Hudson_Strait=30900., Yukon=6428.)
 
 model_runs = ['ICE3G', 'ICE5G', 'ICE6G', 'ANU', 'G12']
@@ -72,12 +109,13 @@ model_runs_longnames = ['ICE-3G/VM1', 'ICE-5G/VM2', 'ICE-6G/VM5a', 'ANU', 'G12/V
 colors = ['green', 'blue', 'red', 'purple', 'orange']
 
 Q = []
-for run in model_runs:
-  Q.append( np.load(run+'.npy').item() )
+for mrun in model_runs:
+  Q.append( np.load(mrun+'.npy').item() )
 
 shortRivers = np.array(['Mississippi River', 'Susquehanna River', 'Hudson River', 'Saint Lawrence River', 'Hudson Strait', 'Mackenzie River', 'Columbia River', 'Colorado River', 'Rio Grande'])
 srnu = np.array(['Mississippi', 'Susquehanna', 'Hudson', 'Saint_Lawrence', 'Hudson_Strait', 'Mackenzie', 'Columbia', 'Colorado', 'Rio_Grande'])
 srnu_spaces = np.array(['Mississippi', 'Susquehanna', 'Hudson', 'Saint Lawrence', 'Hudson Strait', 'Mackenzie', 'Columbia', 'Colorado', 'Rio Grande'])
+plotRivers = np.array(['Mississippi River', 'Susquehanna/Chesapeake', 'Hudson River', 'Saint Lawrence River', 'Hudson Strait', 'Mackenzie River', 'Columbia River', 'Colorado River', 'Rio Grande'])
 
 
 # First, convert to floating-point
@@ -94,13 +132,15 @@ for i in range(len(Q)):
   for Qtype in ['Q_i', 'Q_m', 'Q_t']:
     for rnu in srnu:
       not_nan = np.logical_not(np.isnan(Q[i][Qtype][rnu]))
-      f = interp1d(Q[i]['ages_numeric'][not_nan][::-1], Q[i][Qtype][rnu][not_nan][::-1])
       try:
         #Q[i][Qtype][rnu] = f(Q[i]['ages_numeric'])
+        f = interp1d(Q[i]['ages_numeric'][not_nan][::-1], Q[i][Qtype][rnu][not_nan][::-1])
         Q[i][Qtype][rnu][Q[i]['ages_numeric'] < 20000] = f(Q[i]['ages_numeric'][Q[i]['ages_numeric'] < 20000])
       except:
         pass
 
+# Should be using the Q_meteoric_uncorrected column in the database tables
+# instead of this -- works, but redundant and something that could break
 Q_meteoric_simulated_now = np.genfromtxt('Q_meteoric_simulated_now.txt')
 
 j = 0
@@ -116,13 +156,13 @@ for Qi in Q:
     rnu = srnu[i].replace(' ', '_') # Underscore for dict  
     ax = fig.add_subplot(5, 2, iof)
     for row in Enh_Q_gen[shortRivers[i]]:
-      ax.axvspan(row[0], row[1], facecolor='0.85', linewidth='0')
+      ax.axvspan(row[0], row[1], facecolor='0.85', linewidth=0)
     for row in EnhancedQ[shortRivers[i]]:
-      ax.axvspan(row[0], row[1], facecolor='0.65', linewidth='0')
+      ax.axvspan(row[0], row[1], facecolor='0.65', linewidth=0)
     ax.plot(Qi['ages_numeric']/1000., Qi['Q_t'][rnu],'k-', linewidth=6, label='Total discharge')
     ax.plot(Qi['ages_numeric']/1000., Qi['Q_i'][rnu], 'b-', linewidth=3, label='Meltwater discharge')
     ax.plot(Qi['ages_numeric']/1000., Qi['Q_m'][rnu],'g-', linewidth=2, label='Meteoric water\n(P-ET) discharge')
-    ax.set_title(shortRivers[i], fontsize=16, fontweight='bold')
+    ax.set_title(plotRivers[i], fontsize=16, fontweight='bold')
     ax.set_xlim((0, 20))
     ax.set_ylim((0, ax.get_ylim()[-1]))
     plt.plot(Qi['ages_numeric'][-1]/1000., Q_meteoric_simulated_now[(np.array(Qmodern.keys()) == rnu).nonzero()[0][0]], 'go', markersize=10, zorder=-100, label='Uncorrected modern\nmodeled discharge')
@@ -130,45 +170,12 @@ for Qi in Q:
     if iof == 9:
       ax.legend(loc = 'center', bbox_to_anchor = (1.71, 0.5), fontsize=14, numpoints=1)
     iof += 1
-  fig.tight_layout()
-  fig.subplots_adjust(left=.17, bottom=.08, right=None, top=None, wspace=None, hspace=.4)
-  plt.savefig('all_rivers_'+model_runs[j]+'.png')
-  plt.savefig('../figures/all_rivers_'+model_runs[j]+'.pdf')
-  plt.close()
-  j += 1
-  
-
-
-# Now, to plot all total Q's together
-j = 0
-fig = plt.figure(figsize = (10, 14))
-fig.text((1+.17-.1)/2., 0.04, 'Age [ka]', ha='center', va='center', fontsize=24, fontweight='bold')
-fig.text(0.06, 0.5, 'Total Discharge (meltwater + meteoric water) [m$^3$s$^{-1}$]', ha='center', va='center', rotation='vertical', fontsize=24, fontweight='bold')
-for Qi in Q:
-  print model_runs[j]
-  iof = 1
-  for i in range(len(shortRivers)):
-    #print shortRivers[i]
-    rnu = srnu[i].replace(' ', '_') # Underscore for dict  
-    ax = fig.add_subplot(5, 2, iof)
-    for row in Enh_Q_gen[shortRivers[i]]:
-      ax.axvspan(row[0], row[1], facecolor='0.85', linewidth='0')
-    for row in EnhancedQ[shortRivers[i]]:
-      ax.axvspan(row[0], row[1], facecolor='0.65', linewidth='0')
-    ax.plot(Qi['ages_numeric']/1000., Qi['Q_t'][rnu], color=colors[j], alpha=0.6, linewidth=3, label=model_runs_longnames[j])
-    ax.set_title(shortRivers[i], fontsize=16, fontweight='bold')
-    ax.set_xlim((0, 20))
-    ax.set_ylim((0, ax.get_ylim()[-1]))
-    # set y-lim based on model outputs
-    if iof == 9:
-      ax.legend(loc = 'center', bbox_to_anchor = (1.71, 0.5), fontsize=14)
-    iof += 1
     if rnu == 'Mississippi':
       ax.set_ylim((0, 160000))
     elif rnu == 'Susquehanna':
       ax.set_ylim((0, 40000))
     elif rnu == 'Hudson':
-      ax.set_ylim((0, 120000))
+      ax.set_ylim((0, 160000)) # Could be 140000, but this is better for comparison
     elif rnu == 'Saint_Lawrence':
       ax.set_ylim((0, 160000))
     elif rnu == 'Hudson_Strait':
@@ -180,10 +187,83 @@ for Qi in Q:
     elif rnu == 'Colorado':
       ax.set_ylim((0, 2000))
     elif rnu == 'Rio_Grande':
-      ax.set_ylim((0, 300))
+      ax.set_ylim((0, 1200))
   fig.tight_layout()
   fig.subplots_adjust(left=.17, bottom=.08, right=None, top=None, wspace=None, hspace=.4)
+  plt.savefig('all_rivers_'+model_runs[j]+'.png')
+  plt.savefig('../figures/all_rivers_'+model_runs[j]+'.pdf')
+  plt.close()
   j += 1
+  
+
+
+# Now, to plot all total Q's together
+# And add Licciardi et al. (1999)
+L1999 = np.genfromtxt('/home/awickert/Dropbox/Papers/InProgress/DrainageMethods/Licciardi1999_tables/TotalDischarge.tsv', skip_header=1)
+j = 0
+fig = plt.figure(figsize = (10, 14))
+fig.text((1+.17-.1)/2., 0.04, 'Age [ka]', ha='center', va='center', fontsize=24, fontweight='bold')
+fig.text(0.06, 0.5, 'Total Discharge (meltwater + meteoric water) [m$^3$s$^{-1}$]', ha='center', va='center', rotation='vertical', fontsize=24, fontweight='bold')
+iof = 1
+# Licciardi 1999
+for rnu in srnu:
+  ax = fig.add_subplot(5, 2, iof)
+  if rnu == 'Mississippi':
+    ax.plot(L1999[:,1]/1000., L1999[:,2], color='black', alpha=0.55, linewidth=2, label='Licciardi et al. (1999)', zorder=1.5)
+  elif rnu == 'Hudson':
+    ax.plot(L1999[:,1]/1000., L1999[:,4], color='black', alpha=0.55, linewidth=2, label='Licciardi et al. (1999)', zorder=1.5)
+  elif rnu == 'Saint_Lawrence':
+    ax.plot(L1999[:,1]/1000., L1999[:,3], color='black', alpha=0.55, linewidth=2, label='Licciardi et al. (1999)', zorder=1.5)
+  elif rnu == 'Hudson_Strait':
+    ax.plot(L1999[:,1]/1000., L1999[:,5], color='black', alpha=0.55, linewidth=2, label='Licciardi et al. (1999)', zorder=1.5)
+  elif rnu == 'Mackenzie':
+    pass # L1999 is for whole Arctic
+  iof += 1
+for Qi in Q:
+  print model_runs[j]
+  iof = 1
+  for i in range(len(shortRivers)):
+    #print shortRivers[i]
+    rnu = srnu[i].replace(' ', '_') # Underscore for dict  
+    ax = fig.add_subplot(5, 2, iof)
+    for row in Enh_Q_gen[shortRivers[i]]:
+      ax.axvspan(row[0], row[1], facecolor='0.85', linewidth=0)
+    for row in EnhancedQ[shortRivers[i]]:
+      ax.axvspan(row[0], row[1], facecolor='0.65', linewidth=0)
+    ax.plot(Qi['ages_numeric']/1000., Qi['Q_t'][rnu], color=colors[j], alpha=0.6, linewidth=3, label=model_runs_longnames[j])
+    ax.set_title(plotRivers[i], fontsize=16, fontweight='bold')
+    ax.set_xlim((0, 20))
+    ax.set_ylim((0, ax.get_ylim()[-1]))
+    # set y-lim based on model outputs
+    iof += 1
+    if rnu == 'Mississippi':
+      ax.set_ylim((0, 160000))
+    elif rnu == 'Susquehanna':
+      ax.set_ylim((0, 40000))
+    elif rnu == 'Hudson':
+      ax.set_ylim((0, 160000))
+    elif rnu == 'Saint_Lawrence':
+      ax.set_ylim((0, 160000))
+    elif rnu == 'Hudson_Strait':
+      ax.set_ylim((0, 250000))
+    elif rnu == 'Mackenzie':
+      ax.set_ylim((0, 160000))
+    elif rnu == 'Columbia':
+      ax.set_ylim((0, 18000))
+    elif rnu == 'Colorado':
+      ax.set_ylim((0, 2000))
+    elif rnu == 'Rio_Grande':
+      ax.set_ylim((0, 1200))
+  j += 1
+
+# L1999
+#  elif rnu == 'Rio_Grande':
+#    # Legend based off of this one
+ax.plot([1000, 1005], [-1500, -1500], color='black', alpha=0.55, linewidth=2, label='Licciardi et al. (1999)', zorder=1.5)
+
+ax.legend(loc = 'center', bbox_to_anchor = (1.71, 0.5), fontsize=14)
+fig.tight_layout()
+fig.subplots_adjust(left=.17, bottom=.08, right=None, top=None, wspace=None, hspace=.4)
 
 plt.savefig('all_rivers.png')
 plt.savefig('../figures/all_rivers.pdf')
@@ -226,7 +306,7 @@ for j in range(len(Q)):
       ax = fig.add_subplot(5, 2, iof)
       plt.bar((big[1][:-1] + big[1][1:])/2., big[0], width=np.mean(np.diff(big[1])), color=colors[j], alpha=0.6, label=model_runs_longnames[j])
       plt.bar((small[1][:-1] + small[1][1:])/2., small[0], width=np.mean(np.diff(small[1])), edgecolor=colors[j], alpha=0.6, linewidth=3, label=model_runs_longnames[j], facecolor='none')
-      ax.set_title(shortRivers[i], fontsize=16, fontweight='bold')
+      ax.set_title(plotRivers[i], fontsize=16, fontweight='bold')
     except:
       pass
     iof += 1
@@ -237,10 +317,8 @@ for j in range(len(Q)):
 
   fig.tight_layout()
   fig.subplots_adjust(left=.17, bottom=.08, right=None, top=None, wspace=None, hspace=.4)
-  """
   plt.savefig('field_model_Q_comparison_'+model_runs[j]+'.png')
   plt.savefig('../figures/field_model_Q_comparison_'+model_runs[j]+'.pdf')
-  """
   plt.close()
   
   # Mean discharge during high and low periods
@@ -284,11 +362,12 @@ plt.figure(figsize=(8,12))
 plt.subplot(211)
 for j in range(len(Q)):
   diffnorm = (MeanQ_fieldQbig[j] - MeanQ_fieldQsmall[j])/(((MeanQ_fieldQsmall[j] + MeanQ_fieldQsmall[j]))/2.)
-  #diffnorm[diffnorm<0] = 1E-100
+  #diffnorm[diffnorm<0] = 1E-2
   plt.semilogy(diffnorm, '-o', markersize=10, color=colors[j], alpha=0.6, linewidth=3, label=model_runs_longnames[j])
   plt.plot([8.5,9], [np.mean(diffnorm),np.mean(diffnorm)], '-', color=colors[j], alpha=0.6, linewidth=6) # mean plt.ylim((1E-1,1E2))
 #plt.ylabel('Normalized difference of large- and small-flow modeled $Q$\n$(Q_l - Q_s) / (Q_l + Q_s)$', fontsize=20)
 plt.ylabel('$(Q_h - Q_l) / (Q_h + Q_l)$', fontsize=20)
+#plt.ylim((0.1, 10))
 plt.xticks(range((len(srnu_spaces)+1)), list(srnu_spaces) + ['MEAN OF\nGLACIATED\nDRAINAGES'], rotation=45, ha='right', fontweight='bold')
 #######
 plt.subplot(212)
@@ -348,7 +427,7 @@ plt.show()
 
 """
     ax.plot(Qi['ages_numeric']/1000., Qi['Q_t'][rnu], color=colors[j], alpha=0.6, linewidth=3, label=model_runs_longnames[j])
-    ax.set_title(shortRivers[i], fontsize=16, fontweight='bold')
+    ax.set_title(plotRivers[i], fontsize=16, fontweight='bold')
     ax.set_xlim((0, 20))
     ax.set_ylim((0, ax.get_ylim()[-1]))
     # set y-lim based on model outputs

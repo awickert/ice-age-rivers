@@ -24,29 +24,45 @@ def define_some_lists(self):
     self.runoff_input.append('runoff_input_' + age)
 
 def resample_ice(self):
-  grass.run_command('g.region', rast='toponow', flags='p')
+  print ""
+  print "Resampling ice maps from global to regional higher-resolution, if necessary"
+  print ""
+  grass.run_command('g.region', region='default')
   # Iteratively interpolate - assume "ages" is a match
   for i in range(len(self.ice)):
-    grass.run_command('g.region', rast='toponow', flags='p')
-    # First, set up the region resolution to approximately that of the climate model output
-    reg = grass.region() # Get original region parameters - original for the region, final for the climate model
-    grass.run_command('g.region', rast='toponow') # Ice model native resolution, with some padding
-    grass.run_command('g.region', flags='p', res=1) # Ice model native resolution, with some padding
-    grass.run_command('g.region', flags='p', n=reg['n']+1, s=reg['s']-1, w=reg['w']-1, e=reg['e']+1) # Ice model native resolution, with some padding
-    # Then resample and run r.neighbors as a "primer"
-    grass.run_command('g.copy', rast=self.ice_raw_import[i] + ',' + self.ice[i], overwrite=True)
-    # Subsequent iterations with nearest-neighbor interpolation until we get past the size of the topography
-    res = 0.5
-    next_res = res / 2.
-    while next_res > reg['nsres']: # Up to the semi-final needed resolution
-      res /= 2.
-      next_res /= 2.
-      grass.run_command('g.region', flags='p', res=res) # Climate model native resolution
+    print self.ages[i]
+    exists = len(grass.parse_command('g.list', type='raster', pattern=self.ice[i]))
+    if exists:
+      print "  Resampled ice map already exists; skipping."
+    else:
+      # First, set up the region resolution to approximately that of the climate model output
+      grass.run_command('g.region', region='default') # Ice model native resolution, with some padding
+      reg = grass.region() # Get original region parameters - original for the region, final for the climate model
+      grass.run_command('g.region', res=1) # Ice model native resolution, with some padding # <------------------------------ NEED TO GENERALIZE IF NOT 1 DEGREE!
+      grass.run_command('g.region', n=reg['n']+1, s=reg['s']-1)
+      if reg.w > -179:
+        grass.run_command('g.region', w=reg['w']-1)
+      else:
+        grass.run_command('g.region', w=-180)
+      if reg.e < 179:
+        grass.run_command('g.region', e=reg['e']+1)
+      else:
+        grass.run_command('g.region', e=180)
+      # Then resample and run r.neighbors as a "primer"
+      grass.run_command('g.copy', rast=self.ice_raw_import[i] + ',' + self.ice[i], overwrite=True)
+      # Subsequent iterations with nearest-neighbor interpolation until we get past the size of the topography
+      res = 1.
+      next_res = res / 2.
+      while next_res > reg['nsres']: # Up to the semi-final needed resolution
+        res /= 2.
+        next_res /= 2.
+        grass.run_command('g.region', res=res) # Climate model native resolution
+        print "resolution:", grass.region()['nsres']
+        grass.run_command('r.resample', input=self.ice[i], output=self.ice[i], overwrite=True)
+        grass.run_command('r.neighbors', input=self.ice[i], output=self.ice[i], size=7, overwrite=True)
+      # Final resolution
+      grass.run_command('g.region', region='default')
       grass.run_command('r.resample', input=self.ice[i], output=self.ice[i], overwrite=True)
-      grass.run_command('r.neighbors', input=self.ice[i], output=self.ice[i], size=7, overwrite=True)
-    # Final resolution
-    grass.run_command('g.region', flags='p', rast='toponow')
-    grass.run_command('r.resample', input=self.ice[i], output=self.ice[i], overwrite=True)
       
 def runoff_input_meteoric(self):
   """
@@ -97,6 +113,7 @@ def runoff_input_ice(self):
     mapcalc( mcstr , overwrite=True)
     print ''
       
+  #i = len(self.ages)-2
   # 0 a and the next time before it should both have ~0 ice loss, or at least be about the same
   print self.runoff_input_ice[i+1]+' = '+self.runoff_input_ice[i]
   grass.run_command('g.copy', rast=self.runoff_input_ice[i] + ',' + self.runoff_input_ice[i+1], overwrite=True)
