@@ -10,13 +10,13 @@ import subprocess
 #location = "G12_NA"
 gisdb    = "/media/awickert/data4/grassdata"
 #location = "ICE6G_Eurasia"
-location = "ICE6G_globalNoAnt"
+location = "ICE6G_Antarctica"
 mapset   = "PERMANENT"
 #gisdb    = "/media/awickert/data4/grassdata"
 
 # Output file name
 #outname = 'Eurasia_Q_m3_s.nc'
-outname = 'GlobalNoAnt_ICE6G_Q_m3_s.nc'
+outname = 'Antarctica_ICE6G_Q_m3_s.nc'
 
 # Outside of GRASS
 
@@ -181,23 +181,22 @@ for age in ages:
     # This works only if it is lat/lon; will fail for projected grids
     #grass.run_command('v.distance', from_='discharge_to_coast_'+age, to='sea_grid_points', upload='to_x,to_y', column='sea_grid_lon,sea_grid_lat')
     # Uses stored values to work for projected grids
-    try:
-      tmp = grass.vector_db_select('discharge_to_coast_'+age, columns='sea_grid_lat').values()[0].values()
-      if tmp[0] == ['']:
-        if isll:
-          grass.run_command('v.distance', _from='discharge_to_coast_'+age, to='sea_grid_points', upload='to_x,to_y', column='sea_grid_lon,sea_grid_lat')
-        else:
-          grass.run_command('v.distance', from_='discharge_to_coast_'+age, to='sea_grid_points', upload='to_attr', to_column='lon', column='sea_grid_lon')
-          grass.run_command('v.distance', from_='discharge_to_coast_'+age, to='sea_grid_points', upload='to_attr', to_column='lat', column='sea_grid_lat')
-    except:
-      grass.run_command('v.db.addcolumn', map='discharge_to_coast_'+age, columns='sea_grid_lon double precision, sea_grid_lat double precision')
+    grass.run_command('v.db.addcolumn', map='discharge_to_coast_'+age, columns='sea_grid_lon double precision, sea_grid_lat double precision')
+    tmp = grass.vector_db_select('discharge_to_coast_'+age, columns='sea_grid_lat').values()[0].values()
+    if tmp[0] == ['']:
       if isll:
         grass.run_command('v.distance', _from='discharge_to_coast_'+age, to='sea_grid_points', upload='to_x,to_y', column='sea_grid_lon,sea_grid_lat')
       else:
-        grass.run_command('v.distance', from_='discharge_to_coast_'+age, to='sea_grid_points', upload='to_attr', to_column='lon', column='sea_grid_lon')
-        grass.run_command('v.distance', from_='discharge_to_coast_'+age, to='sea_grid_points', upload='to_attr', to_column='lat', column='sea_grid_lat')
+        try:
+          grass.run_command('v.distance', from_='discharge_to_coast_'+age, to='sea_grid_points', upload='to_attr', to_column='lon', column='sea_grid_lon')
+        except:
+          grass.run_command('v.distance', from_='discharge_to_coast_'+age, to='sea_grid_points', upload='to_attr', to_column='x', column='sea_grid_lon')
+        try:
+          grass.run_command('v.distance', from_='discharge_to_coast_'+age, to='sea_grid_points', upload='to_attr', to_column='lat', column='sea_grid_lat')
+        except:
+          grass.run_command('v.distance', from_='discharge_to_coast_'+age, to='sea_grid_points', upload='to_attr', to_column='y', column='sea_grid_lat')
   except:
-    pass # No discharge points!
+    print "No discharge points!"
 print ""
 print "***"
 print "Output Step"
@@ -210,7 +209,8 @@ for age in ages:
   print age
   print "***"
   print ""
-  Qll = np.array(grass.vector_db_select('discharge_to_coast_'+age).values()[0].values(), dtype=float) # Any possible point precision issues can be rounded;
+  # Any possible point precision issues can be rounded
+  Qll = np.array(grass.vector_db_select('discharge_to_coast_'+age).values()[0].values(), dtype=float)
   for row in Qll:
     # Summing these into gridded bins here
     discharge_grid[lats == round(row[-1],3), lons == round(row[-2],2)] += row[1]
