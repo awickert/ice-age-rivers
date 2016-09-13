@@ -50,7 +50,7 @@ def get_time_steps():
   ages = []
   for indexmap in indexmaps:
     ages.append( str(indexmap.split('_')[-1]) )
-  ages = ages[-25:] # TEMPORARY HACK-EY TO FINISH G12
+  #ages = ages[-25:] # TEMPORARY HACK-EY TO FINISH G12
   return ages
 
 # From http://matplotlib.org/users/colormapnorms.html
