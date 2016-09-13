@@ -107,6 +107,10 @@ def separate_oceans(self):
     # leave the binary raster intact
     grass.run_command('g.copy', rast=ocean_binary + ',' + notocean_only, overwrite=True)
     grass.run_command('r.null', map=notocean_only, setnull='0') # Turns ocean to null
+    # Just in case the ocean binary is somehow lacking ocean -- change this to 0!
+    # This is really just a patch for something that came up while doing this on a global scale
+    for age in self.ages:
+      grass.run_command('r.null', map='ocean_binary_'+age, null='0') # Turns ocean to null
 
     print "Converting notocean_only maps to vector..."
 
@@ -844,8 +848,11 @@ def basin_discharge(self):
   # Modern Hudson Strait is the Koksoak River
   # And note that I am assuming a similar bias in Q for the regions even as drainage area changes
   # Rivers with no value will just get calculated outputs
+  # This column is the first-round normalization, but is not the same thing
+  # that I am using now. In fact, it's not even the same thing that I am using
+  # later -- and look for Q_meteoric_simulated_now.txt.
   Qmodern = dict(Mississippi=18434., Mackenzie=9910., Colorado=610., Rio_Grande=200., Hudson=606., Columbia=7500., Susquehanna=318., Saint_Lawrence=16800., Hudson_Strait=2800., Yukon=6428.)
-  Qnormalization = dict(Mississippi=1., Mackenzie=1., Colorado=1., Rio_Grande=1., Hudson=1., Columbia=1., Susquehanna=1., Saint_Lawrence=1., Hudson_Strait=1., Yukon=1., Other_North=1., Barents=1., White_Sea=1., Kara_Northwest=1., Kara_Southeast=1., Daugava_and_Baltic=1., Vefsnfjord=1., Puget_Sound=1., Volga=1., Canadian_Cordillera=1., Newfoundland_and_Labrador=1.) # Start with this but be sure to update every item!
+  Qnormalization = dict(Mississippi=1., Mackenzie=1., Colorado=1., Rio_Grande=1., Hudson=1., Columbia=1., Susquehanna=1., Saint_Lawrence=1., Hudson_Strait=1., Yukon=1., Other_North=1., Barents=1., White_Sea=1., Kara_Northwest=1., Kara_Southeast=1., Daugava_and_Baltic=1., Vefsnfjord=1., Puget_Sound=1., Volga=1., Canadian_Cordillera=1., Newfoundland_and_Labrador=1., Skeena=1.) # Start with this but be sure to update every item!
   # Go from present backwards, so I can get the modern normalization in place 
   # first
   # No Q_t (Q_total) here yet because of the need to re-normalize discharge
@@ -911,6 +918,7 @@ def basin_discharge(self):
       Q_m = sum(Q_m) # 0 if no items - perfect!
 
       # Get ratio between Q_m and modern
+      # This seems to be the cause for the sudden drop to the modern time-step!
       if age == '000_0k' or age == '000_00k' or age == '000_000k' or age == '000000':
         try:
           Qnormalization[rnu] = Qmodern[rnu] / Q_m
@@ -919,8 +927,11 @@ def basin_discharge(self):
           pass
 
       # Update proper columns with discharge values
+      # Maybe I should have non-normalized values like these here
       grass.run_command('v.db.update', map=drainage_basins, column='Q_ice', where="river="+'"'+rivername+'"', value=Q_i)
       grass.run_command('v.db.update', map=drainage_basins, column='Q_meteoric_uncorrected', where="river="+'"'+rivername+'"', value=Q_m)
+      #grass.run_command('v.db.update', map=drainage_basins, column='Q_meteoric', where="river="+'"'+rivername+'"', value=Q_m)
+      #grass.run_command('v.db.update', map=drainage_basins, column='Q_total', where="river="+'"'+rivername+'"', value=Q_m + Q_i)
       grass.run_command('v.db.update', map=drainage_basins, column='Q_meteoric', where="river="+'"'+rivername+'"', value=Q_m * Qnormalization[rnu])
       grass.run_command('v.db.update', map=drainage_basins, column='Q_total', where="river="+'"'+rivername+'"', value=Q_m * Qnormalization[rnu] + Q_i)
       
@@ -1208,23 +1219,52 @@ def ice_volume(self):
   for age in self.ages:
     print age
     ice = 'ice_' + age # Ice thickness difference
-    dVlakes = 'dVice_' + age # Ice volume difference, km**3
-    mapcalc(dVlakes + ' = (' + ice + ' - ice_000_0k) / 1000 * cellsize_km2')
+    dVice = 'dVice_' + age # Ice volume difference, km**3
+    mapcalc(dVice + ' = (' + ice + ' - ice_000_0k) / 1000 * cellsize_km2')
+
+
+def ice_volume_sum(self):
+  grass.run_command('g.region', rast='cellsize_meters2')
+  area_m2 = garray.array()
+  area_m2.read('cellsize_meters2')
+  h_i = garray.array()
+  Vice_list = []
+  for age in self.ages:
+    print age
+    ice = 'ice_' + age # Lake volume difference, km**3
+    h_i.read(ice)
+    Vice = np.sum(h_i * area_m2)
+    Vice_list.append(Vice)
+    print '  ', Vice/1E9, 'km**3'
+  Vice_array = np.array(Vice_list)
+  # Marshall and Clarke value for ocean area
+  # (converted to km**2, then * 1000 for m)
+  SLE = Vice_array * (0.917 / (3.62E8 * 1E6))
+  print SLE
+  out = np.vstack((self.ages_numeric, Vice_array, SLE)).transpose()
+  loc = grass.gisenv()['LOCATION_NAME']
+  outname = 'SLE_out/' + loc + '_SLE.txt'
+  np.savetxt(outname, out)
 
 # 11. Sum ice volume and plot with lakes
 # Not necessary until last step
-def ice_volume_sum(self):
+def ice_volume_sum_old(self):
   print "*************"
   print "Summing ice volume through time"
-  self.dVice_tot = []
+  self.Vice_list = []
   for age in self.ages:
     print age
-    dVice = 'dVice_' + age # Lake volume difference, km**3
-    self.dVice_tot.append(float(grass.parse_command('r.sum', rast=dVice)['SUM']))
-  # Marshall and Clarke value (converted to km**2, then * 1000 for m)
+    Vice = 'Vice_' + age # Lake volume difference, km**3
+    univar_out = grass.parse_command('r.univar', map=ice)['SUM']
+    kw = np.array( univar_out.keys()[0].split('|') )
+    val = np.array( univar_out.keys()[1].split('|') )
+    Vice = val[kw == 'sum']
+    self.Vice_list.append(float())
+  # Marshall and Clarke value for ocean area (converted to km**2, then * 1000 for m)
   # Also converted from ice volume to water volume
-  self.dz_ice_ocean_eq = (np.array(self.dVice_tot) * 0.917 / 3.62E8) * 1000 # [m] km**3 / km**2; km--> m
-  print self.dz_ice_ocean_eq
+  self.Vice_tot = np.array(self.Vice_tot)
+  self.z_ice_ocean_eq = (self.Vice_tot * 0.917 / 3.62E8) * 1000 # [m] km**3 / km**2; km--> m
+  print self.z_ice_ocean_eq
   import matplotlib.pyplot as plt
   plt.plot(self.ages_numeric, self.dz_ice_ocean_eq,'k-')
   plt.xlabel('Age [ka]', fontsize=16)
