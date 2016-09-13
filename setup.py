@@ -16,7 +16,12 @@ def start(self, n=85, s=15, w=-170, e=-40, res='0:0:30'):
   print ' SETUP STEP, TO IMPORT AND CONFIGURE DATA AND MODELS '
   print '####################################################################'    
   print ''
-  grass.run_command('g.region', n=n, s=s, w=w, e=e, res=res, flags='p')
+  grass.run_command('g.region', n=n, s=s, w=w, e=e, res=res, flags='p', save='default', overwrite=True)
+  #self.n = n
+  #self.s = s
+  #self.w = w
+  #self.e = e
+  #self.res = res
 
 def setConstants(self):
   # Constants
@@ -48,7 +53,14 @@ def generateAges(self, LGM=False, ICE='ANU', custom=None):
   print "Generating ages from time-step file-names."
   print ''
   # icemaps from old to young
-  icemaps = sorted( grass.parse_command('g.list', type='raster', pattern='ice_??????').keys() )[::-1]
+  icemaps = sorted( grass.parse_command('g.list', type='raster', pattern='ice_raw_import_??????').keys() )[::-1]
+  if len(icemaps) == 0:
+    icemaps = sorted( grass.parse_command('g.list', type='raster', pattern='ice_raw_??????').keys() )[::-1]
+    if len(icemaps) == 0:
+      # Not using raw maps -- possibility for error
+      icemaps = sorted( grass.parse_command('g.list', type='raster', pattern='ice_??????').keys() )[::-1]
+      if len(icemaps) == 0:
+        sys.exit('Find new time-series on which to base the ages for analysis')
   # on time-steps
   self.ages = []
   self.ages_numeric = []
@@ -60,6 +72,19 @@ def generateAges(self, LGM=False, ICE='ANU', custom=None):
     self.ages_numeric.append(float(self.ages[-1]))
   self.ages = np.array(self.ages)
   self.ages_numeric = np.array(self.ages_numeric)
+  
+  # If ice time-series longer than climate one, remove all ice time-steps younger than the
+  # start of the climate model
+  # Get age of oldest GCM output
+  wbmaps = sorted( grass.parse_command('g.list', type='raster', pattern='wb_??????').keys() )[::-1]
+  wb_ages_numeric = []
+  for wbmap in wbmaps:
+    wb_ages_numeric.append(float(re.findall('\d+', wbmap)[0]))
+  wb_ages_numeric = np.array(wb_ages_numeric)
+  wb_age_max = np.max(wb_ages_numeric)
+  self.ages = self.ages[self.ages_numeric <= wb_age_max]
+  self.ages_numeric = self.ages_numeric[self.ages_numeric <= wb_age_max]
+
   # on_midpoints
   self.midpoint_age_numeric = self.setup.adjacentAverage(self, self.ages_numeric)
   self.midpoint_age = []
