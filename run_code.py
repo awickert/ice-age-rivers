@@ -109,7 +109,7 @@ d.climate.runoff_input_total(d)
 # not true, but not yet on a glacial cycle magnitude
 #d.ages = d.ages[1:] # IMPORTANT! Should have this inside the functions, but hasn't been too much of a problem out here yet
 #d.ages_numeric = self.ages_numeric[1:]
-d.truncate_ages(d)
+d.truncate_ages()
 d.dt_numeric = np.diff(d.ages_numeric[::-1])[::-1] # update
 d.dt = d.dt_numeric.astype(str)
 d.midpoint_age = d.midpoint_age[1:] # first ts removed here as well
@@ -147,8 +147,11 @@ d.compute_drainage.basin_discharge(d)
 #d.compute_drainage.basin_ice_volume(d)
 #save=False; show=True; legend=False; bigtitle=False; alltimes=False; onefig=True; ICE=None
 d.output.basin_discharge_save(d)
+run Qhist_all.py
+# Typically, run Qhist_all.py
 d.output.basin_discharge_plots(d, save=True, show=True, legend=False, bigtitle=False, alltimes=False, onefig=True)
 
+# for G12: self.ages = self.ages[2:]: 20.5 ka to present
 d.compute_drainage.ice_volume_sum(d)
 
 """
