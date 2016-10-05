@@ -147,9 +147,13 @@ try:
 except:
   print "Projecting to present -- hard-coded for G12"
   t500 = interpolate(files[0])
-  t600 = interpolate(files[1])
-  diff = t500 - t600
-  del t600
+  #t600 = interpolate(files[1])
+  #diff = t500 - t600
+  diff = (toponow - t500)/5.
+  #del t600
+  # NEW METHOD -- NO DIFFERENCE EXCEPT FOR FIXING MISTAKE (HOW?) FOR 
+  # TOPO_000100
+  """
   correction = toponow - (t500 + 5*diff)
   outarray = garray.array()
   outarray[...] = correction
@@ -164,9 +168,24 @@ except:
   outarray.write('topo_000100', overwrite=True)
   outarray[...] = toponow
   outarray.write('topo_000000', overwrite=True)
+  """
+  outarray = garray.array()
+  outarray[...] = t500 + diff
+  outarray.write('topo_000400', overwrite=False)
+  outarray[...] = t500 + 2*diff
+  outarray.write('topo_000300', overwrite=False)
+  outarray[...] = t500 + 3*diff
+  outarray.write('topo_000200', overwrite=False)
+  outarray[...] = t500 + 4*diff
+  outarray.write('topo_000100', overwrite=False)
+  outarray[...] = toponow
+  outarray.write('topo_000000', overwrite=True)
   del t500
   del diff
   del outarray
+
+for topomap in 'topo_000400', 'topo_000300', 'topo_000200', 'topo_000100':
+  grass.run_command('r.colors', map=topomap, color='etopo2')
 
 def worker(name, correction):
   starttime = time.time()

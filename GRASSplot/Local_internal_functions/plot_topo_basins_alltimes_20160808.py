@@ -1,6 +1,7 @@
 #! /usr/bin/python
 
 import os
+import time
 os.chdir('/home/awickert/Dropbox/Papers/InProgress/DrainageMethods/GRASSplot_active_editing')
 
 # Limit plotted rivers to those that are being shown in the plots
@@ -137,6 +138,7 @@ for age in ages:
 
   # EVENTUALLY UPDATE THIS TO BE FOR BASEMAP IN TOPO, GIA
   for basemap in ['topo']: #, 'GIA']:
+    start_time = time.time()
     print ""
     print "***"
     print age
@@ -172,6 +174,7 @@ for age in ages:
       ax.contour(icelons, icelats, ice, levels=[40], transform=cartopy.crs.PlateCarree(), colors='w', linewidth=4)
       #for line in border:
       #  ax.plot(line[:,0], line[:,1], linewidth=4, color='k', transform=cartopy.crs.PlateCarre())
+      print "Plotting the vectors (long time)"
       for line in shore:
         ax.plot(line[:,0], line[:,1], linewidth=.5, color='.2', transform=cartopy.crs.PlateCarree())
       for line in drainage_basins:
@@ -180,6 +183,8 @@ for age in ages:
         ax.plot(line[:,0], line[:,1], color='blue', linewidth=1, transform=cartopy.crs.PlateCarree())
       plt.tight_layout()
       plt.subplots_adjust(left=0., right=1., top=1., bottom=0.)
+      print "Saving figure"
       plt.savefig(outpath)
       plt.close()
+      print start_time - time.time()
 
