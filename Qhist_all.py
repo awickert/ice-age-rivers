@@ -320,8 +320,9 @@ for j in range(len(Q)):
 
   fig.tight_layout()
   fig.subplots_adjust(left=.17, bottom=.08, right=None, top=None, wspace=None, hspace=.4)
-  plt.savefig('field_model_Q_comparison_'+model_runs[j]+'.png')
-  plt.savefig('../figures/field_model_Q_comparison_'+model_runs[j]+'.pdf')
+  # Not using these plots
+  #plt.savefig('field_model_Q_comparison_'+model_runs[j]+'.png')
+  #plt.savefig('../figures/field_model_Q_comparison_'+model_runs[j]+'.pdf')
   plt.close()
   
   # Mean discharge during high and low periods
@@ -384,6 +385,7 @@ plt.ylabel('Kolmogorov-Smirnov distance ($D$)', fontsize=20)
 #plt.text(0.1, 0.02, 'High values indicate that modeled discharges\ndiffer significantly during data-derived times\nofhigh and low flow', horizontalalignment='left', verticalalignment='bottom', fontsize=14)
 plt.tight_layout()
 plt.savefig('../figures/inprogress/modelTiming_difference_and_goodness_of_fit.svg')
+#plt.savefig('../figures/inprogress/modelTiming_difference_and_goodness_of_fit.pdf')
 plt.show()
 
 """
