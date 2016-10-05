@@ -1,0 +1,1 @@
+v.extract in=river_mouth_regions out=river_mouth_regions_ESurf where='river="Mississippi" OR river="Rio Grande" OR river="Colorado" OR river="Columbia" OR river="Mackenzie" OR river="Hudson Strait" OR river="Saint Lawrence" OR river="Hudson" OR river="Susquehanna"'
