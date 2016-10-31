@@ -5,12 +5,14 @@ import shutil
 import os
 import sys
 import subprocess
+import sys
 
 # specify (existing) location and mapset
 #location = "G12_NA"
 gisdb    = "/media/awickert/data4/grassdata"
+location = sys.argv[1]
 #location = "ICE6G_Eurasia"
-location = "ICE6G_globalNoAnt"
+#location = "ICE6G_globalNoAnt"
 mapset   = "PERMANENT"
 #gisdb    = "/media/awickert/data4/grassdata"
 
