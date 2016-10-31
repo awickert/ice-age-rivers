@@ -12,7 +12,7 @@ import sys
 
 # specify (existing) location and mapset
 #location = "G12_NA"
-gisdb    = "/data3/grassdata"
+gisdb    = "/data4/grassdata"
 location = str(sys.argv[1])
 #location = "ICE6G_globalNoAnt"
 #location = "ICE6G_Antarctica"
@@ -171,8 +171,8 @@ for ncfile_for_mask__name in ncfiles_for_mask__name:
     print "*****"
     print ""
 
-    if exists(sea_grid_points, 'vector') == False:
-      grass.run_command('v.proj', location='ocean_model_grid', input=sea_grid_points, quiet=True)
+    #if exists(sea_grid_points, 'vector') == False:
+    grass.run_command('v.proj', location='ocean_model_grid', input=sea_grid_points, overwrite=True, quiet=True)
       # Could do this entirely within GRASS, but I'll keep querying the external files
       #grass.run_command('r.proj', location='ocean_model_grid', input=ncfile_basename)
     #discharge_grid = garray.array()
@@ -200,9 +200,9 @@ for ncfile_for_mask__name in ncfiles_for_mask__name:
       # grass.mapcalc('discharge_to_coast_'+age+' = abs('+'ocean_plus_shore_'+age+' + accumulation_'+age+')', overwrite=True)
       # RASTER TO VECTOR
       grass.run_command('g.region', rast='topo_000000')
-      if exists('discharge_to_coast_'+age, 'raster') == False:
-        grass.mapcalc('discharge_to_coast_'+age+' = abs('+'ocean_plus_shore_'+age+' + accumulation_ice_'+age+')', overwrite=False, quiet=True)
-        grass.run_command('r.null', map='discharge_to_coast_'+age, setnull=0, quiet=True) # speeds up vector map creation
+      #if exists('discharge_to_coast_'+age, 'raster') == False:
+      grass.mapcalc('discharge_to_coast_'+age+' = abs('+'ocean_plus_shore_'+age+' + accumulation_ice_'+age+')', overwrite=True, quiet=True)
+      grass.run_command('r.null', map='discharge_to_coast_'+age, setnull=0, quiet=True) # speeds up vector map creation
       if isll:
         grass.run_command('g.region', w=-180, e=180)
       #if exists('discharge_to_coast_'+ncfile_basename+'_'+age, 'vector') == False:
