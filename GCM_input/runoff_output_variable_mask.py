@@ -200,14 +200,14 @@ for ncfile_for_mask__name in ncfiles_for_mask__name:
       # grass.mapcalc('discharge_to_coast_'+age+' = abs('+'ocean_plus_shore_'+age+' + accumulation_'+age+')', overwrite=True)
       # RASTER TO VECTOR
       grass.run_command('g.region', rast='topo_000000')
-      #if exists('discharge_to_coast_'+age, 'raster') == False:
-      grass.mapcalc('discharge_to_coast_'+age+' = abs('+'ocean_plus_shore_'+age+' + accumulation_ice_'+age+')', overwrite=True, quiet=True)
-      grass.run_command('r.null', map='discharge_to_coast_'+age, setnull=0, quiet=True) # speeds up vector map creation
+      #if exists('discharge_to_coast_'+age, 'raster') == False:    ncfile_basename+'_'+
+      grass.mapcalc('discharge_to_coast_'+ncfile_basename+'_'+age+' = abs('+'ocean_plus_shore_'+age+' + accumulation_ice_'+age+')', overwrite=True, quiet=True)
+      grass.run_command('r.null', map='discharge_to_coast_'+ncfile_basename+'_'+age, setnull=0, quiet=True) # speeds up vector map creation
       if isll:
         grass.run_command('g.region', w=-180, e=180)
       #if exists('discharge_to_coast_'+ncfile_basename+'_'+age, 'vector') == False:
       try:
-        grass.run_command('r.to.vect', input='discharge_to_coast_'+age, output='discharge_to_coast_'+ncfile_basename+'_'+age, type='point', column='discharge_m3_s', overwrite=True, quiet=True)
+        grass.run_command('r.to.vect', input='discharge_to_coast_'+ncfile_basename+'_'+age, output='discharge_to_coast_'+ncfile_basename+'_'+age, type='point', column='discharge_m3_s', overwrite=True, quiet=True)
         #grass.run_command('v.db.dropcolumn', map='discharge_to_coast_'+ncfile_basename+'_'+age, columns='sea_grid_lon,sea_grid_lat', quiet=True)
         grass.run_command('v.db.addcolumn', map='discharge_to_coast_'+ncfile_basename+'_'+age, columns='sea_grid_lon double precision, sea_grid_lat double precision', quiet=True)
         tmp = grass.vector_db_select('discharge_to_coast_'+ncfile_basename+'_'+age, columns='sea_grid_lat').values()[0].values()
