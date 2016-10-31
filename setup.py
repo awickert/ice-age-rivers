@@ -42,7 +42,7 @@ def adjacentAverage(self, array):
   """
   return (array[1:] + array[:-1]) / 2.
 
-def generateAges(self, LGM=False, ICE='ANU', custom=None):
+def generateAges(self, before_GCM=False):
   """
   1. Generate a list of ages from time-step file names
      - strings
@@ -76,14 +76,17 @@ def generateAges(self, LGM=False, ICE='ANU', custom=None):
   # If ice time-series longer than climate one, remove all ice time-steps younger than the
   # start of the climate model
   # Get age of oldest GCM output
-  wbmaps = sorted( grass.parse_command('g.list', type='raster', pattern='wb_??????').keys() )[::-1]
-  wb_ages_numeric = []
-  for wbmap in wbmaps:
-    wb_ages_numeric.append(float(re.findall('\d+', wbmap)[0]))
-  wb_ages_numeric = np.array(wb_ages_numeric)
-  wb_age_max = np.max(wb_ages_numeric)
-  self.ages = self.ages[self.ages_numeric <= wb_age_max]
-  self.ages_numeric = self.ages_numeric[self.ages_numeric <= wb_age_max]
+  if before_GCM:
+    pass # allow it if you decide to
+  else:
+    wbmaps = sorted( grass.parse_command('g.list', type='raster', pattern='wb_??????').keys() )[::-1]
+    wb_ages_numeric = []
+    for wbmap in wbmaps:
+      wb_ages_numeric.append(float(re.findall('\d+', wbmap)[0]))
+    wb_ages_numeric = np.array(wb_ages_numeric)
+    wb_age_max = np.max(wb_ages_numeric)
+    self.ages = self.ages[self.ages_numeric <= wb_age_max]
+    self.ages_numeric = self.ages_numeric[self.ages_numeric <= wb_age_max]
 
   # on_midpoints
   self.midpoint_age_numeric = self.setup.adjacentAverage(self, self.ages_numeric)

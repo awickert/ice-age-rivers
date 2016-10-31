@@ -51,11 +51,11 @@ class Drainage(object):
   def __init__(self, ICE=None):
     self.ICE = ICE
 
-  def modelSetup(self, n=None, s=None, w=None, e=None, res=None):
+  def modelSetup(self, n=None, s=None, w=None, e=None, res=None, before_GCM=False):
     # n,s,w,e,res defaults are for North America and are set in "setup.start"
     self.setup.start(self, n=n, s=s, w=w, e=e, res=res)
     self.setup.setConstants(self)
-    self.setup.generateAges(self) # Used for the kk_h ages -- or removes padding (newer versions)
+    self.setup.generateAges(self, before_GCM=before_GCM) # Used for the kk_h ages -- or removes padding (newer versions)
 
   def modelClimate(self):
     self.climate.define_some_lists(self)

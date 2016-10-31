@@ -47,7 +47,8 @@ reload(d.output)
 
 # Starting interactive mode
 import os
-os.chdir('/home/awickert/Dropbox/Papers/InProgress/DrainageMethods/program')
+#os.chdir('/home/awickert/Dropbox/Papers/InProgress/DrainageMethods/program')
+os.chdir('/home/awickert/models/ice-age-rivers')
 import drainage
 d = drainage.Drainage(ICE=None)
 self = d
@@ -62,7 +63,7 @@ from grass.script import db
 from grass.script import vector as vect
 from matplotlib import pyplot as plt
 #d.modelSetup(n=85, s=-60, w=-180, e=180, res='00:00:30')
-d.modelSetup()
+d.modelSetup(before_GCM=True)
 d.climate.define_some_lists(d)
 d.truncate_ages() # IMPORTANT! Should have this inside the functions, but hasn't been too much of a problem out here yet
 #d.output.basin_discharge_save(d)
