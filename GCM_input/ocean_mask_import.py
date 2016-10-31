@@ -111,14 +111,14 @@ for ncfile_for_mask__name in ncfiles_for_mask__name:
   dlon = np.mean(np.diff(lons)) # bug possible here, but should work for regular grids
   w = lons[0] - dlon/2
   e = lons[-1] + dlon/2
-  grass.run_command('g.region', w=0, e=360, n=90, s=-90, rows=oceanmask.shape[0], cols=oceanmask.shape[1])
+  grass.run_command('g.region', w=w, e=e, n=n, s=s, rows=oceanmask.shape[0], cols=oceanmask.shape[1])
   # ASSUMING NO CHANGE IN GRID SIZE!
   try:
-    grass.mapcalc('lon = x()')
+    grass.mapcalc('lon = x()', overwrite=True)
   except:
     pass
   try:
-    grass.mapcalc('lat = y()')
+    grass.mapcalc('lat = y()', overwrite=True)
   except:
     pass
   GRASSmask = garray.array()
