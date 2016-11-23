@@ -60,7 +60,7 @@ for ncfile_for_mask__name in ncfiles_for_mask__name:
   Qout = []
   t = []
 
-  for age in ages:
+  for age in ages[:10]:
     print ""
     print "***"
     print age
@@ -77,7 +77,7 @@ for ncfile_for_mask__name in ncfiles_for_mask__name:
                                                                      # Masking done in GRASS GIS location
     lats = ncfile_for_mask.variables['latitude'].getValue()
     elons = ncfile_for_mask.variables['longitude'].getValue()
-    lons = elons.copy()
+    #lons = elons.copy()
     #lons[lons>180] -= 360 -- could test for this, but know that this set has 0--360 in Qll
 
     # Any possible floating point precision issues can be rounded;
@@ -85,7 +85,7 @@ for ncfile_for_mask__name in ncfiles_for_mask__name:
     
     for row in Qll:
       # Summing these into gridded bins here
-      discharge_grid[lats == round(row[-1],3), lons == round(row[-2],2)] += row[1]
+      discharge_grid[lats == round(row[-1],3), elons == round(row[-2],2)] += row[1]
       #discharge_grid[np.asarray(np.ix_(lats == round(row[-1],3), lons == round(row[-2],2))).squeeze()]
 
     t.append(age)
