@@ -117,8 +117,8 @@ ages = np.array(ages)
 ages_numeric = ages.astype(int)
 
 # Climate model run (TraCE-21K) goes back only to 22 ka
-ages = ages[ages_numeric <= 22000]
-ages_numeric = ages_numeric[ages_numeric <= 22000]
+ages = ages[(ages_numeric > 22000) + (ages_numeric == 0)]
+ages_numeric = ages_numeric[(ages_numeric > 22000) + (ages_numeric == 0)]
 
 
 #############################
@@ -184,8 +184,8 @@ except:
   del diff
   del outarray
 
-for topomap in 'topo_000400', 'topo_000300', 'topo_000200', 'topo_000100':
-  grass.run_command('r.colors', map=topomap, color='etopo2')
+  for topomap in 'topo_000400', 'topo_000300', 'topo_000200', 'topo_000100':
+    grass.run_command('r.colors', map=topomap, color='etopo2')
 
 def worker(name, correction):
   starttime = time.time()
@@ -225,6 +225,27 @@ for i in range( int(np.ceil( len(files) / float(n_simultaneous_jobs) )) ):
 # Give a better colormap
 for topomap in sorted(grass.parse_command('g.list', type='raster', pattern='topo_*')):
   grass.run_command('r.colors', map=topomap, color='etopo2')
+
+# COMMENT THIS LATER -- FOR EXTRA IMPORT STEP WHILE ADDING TIME-STEPS
+# M180_180 REQUIRED FOR PROJECTION TO ANTARCTICA
+for age in ages[1:]:
+  grass.mapcalc('topo_m180_180_'+age+' = topo_'+age)
+
+for age in ages:
+  grass.run_command('r.proj', location='ICE6G_global', input='ice_raw_m180_180_'+age, out='ice_raw_'+age, overwrite=True)
+
+#for age in ['023000', '024000', '025000', '026000']:
+#  grass.run_command('r.proj', location='globalNoAnt', input='topo_m180_180_'+age, out='topo_'+age, overwrite=True)
+
+for age in ages:
+  grass.run_command('r.proj', location='ICE6G_global', input='topo_m180_180_'+age, out='topo_'+age, overwrite=True)
+
+for age in ages:
+  grass.run_command('r.proj', location='ICE6G_global', input='ice_'+age, out='topo_'+age, overwrite=True)
+
+for age in ages:
+  grass.run_command('r.proj', location='ICE6G_global', input='ice_'+age, out='topo_'+age, overwrite=True)
+
 
 """
 #band-aid

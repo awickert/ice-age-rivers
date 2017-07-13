@@ -57,64 +57,65 @@ for ncfile_for_mask__name in ncfiles_for_mask__name:
     print "*****"
     print ""
 
-  Qout = []
-  t = []
+    Qout = []
+    t = []
 
-  for age in ages[:10]:
-    print ""
-    print "***"
-    print age
-    print "***"
-    print ""
+    for age in ages:
+      print ""
+      print "***"
+      print age
+      print "***"
+      print ""
 
-    ncfile_for_mask = NetCDFFile(ncfile_for_mask__name, 'r')
+      ncfile_for_mask = NetCDFFile(ncfile_for_mask__name, 'r')
 
-    testgrid = 1 - ncfile_for_mask.variables['lsm'].getValue()
-    testgrid[testgrid == 0] = np.nan
+      testgrid = 1 - ncfile_for_mask.variables['lsm'].getValue()
+      testgrid[testgrid == 0] = np.nan
 
-    # lsm = land-sea mask. 0 over ocean, 1 over land.
-    discharge_grid = 0 * ncfile_for_mask.variables['lsm'].getValue() # Just a grid of the right size
-                                                                     # Masking done in GRASS GIS location
-    lats = ncfile_for_mask.variables['latitude'].getValue()
-    elons = ncfile_for_mask.variables['longitude'].getValue()
-    #lons = elons.copy()
-    #lons[lons>180] -= 360 -- could test for this, but know that this set has 0--360 in Qll
+      # lsm = land-sea mask. 0 over ocean, 1 over land.
+      discharge_grid = 0 * ncfile_for_mask.variables['lsm'].getValue() # Just a grid of the right size
+                                                                       # Masking done in GRASS GIS location
+      # N/S (standard) lats and E lons
+      lats = ncfile_for_mask.variables['latitude'].getValue()
+      elons = ncfile_for_mask.variables['longitude'].getValue()
+      #lons = elons.copy()
+      #lons[lons>180] -= 360 -- could test for this, but know that this set has 0--360 in Qll
 
-    # Any possible floating point precision issues can be rounded;
-    Qll = np.array(grass.vector_db_select('discharge_to_coast_'+ncfile_basename+'_'+age).values()[0].values(), dtype=float)
-    
-    for row in Qll:
-      # Summing these into gridded bins here
-      discharge_grid[lats == round(row[-1],3), elons == round(row[-2],2)] += row[1]
-      #discharge_grid[np.asarray(np.ix_(lats == round(row[-1],3), lons == round(row[-2],2))).squeeze()]
+      # Any possible floating point precision issues can be rounded;
+      Qll = np.array(grass.vector_db_select('discharge_to_coast_'+ncfile_basename+'_'+age).values()[0].values(), dtype=float)
+      
+      for row in Qll:
+        # Summing these into gridded bins here
+        discharge_grid[lats == round(row[-1],3), elons == round(row[-2],2)] += row[1]
+        #discharge_grid[np.asarray(np.ix_(lats == round(row[-1],3), lons == round(row[-2],2))).squeeze()]
 
-    t.append(age)
-    Qout.append(discharge_grid.copy()) # "copy" important! otherwise points to zeroed grid.
-    print "Total discharge = ", np.sum(Qout[-1]), 'm3/s'
-    discharge_grid *= 0
+      t.append(age)
+      Qout.append(discharge_grid.copy()) # "copy" important! otherwise points to zeroed grid.
+      print "Total discharge = ", np.sum(Qout[-1]), 'm3/s'
+      discharge_grid *= 0
 
-  # Towards netcdf export
-  #newnc = NetCDFFile('test2.nc', 'w')
-  #shutil.copyfile('qrparm.waterfix.hadcm3_bbc15ka.nc', dst)
-  newnc = NetCDFFile(outname, 'w')
-  newnc.createDimension('t', len(t))
-  newnc.createDimension('longitude', len(lons))
-  newnc.createDimension('latitude', len(lats))
-  newnc.createVariable('t', 'i', ('t',))
-  newnc.createVariable('longitude', 'f', ('longitude',))
-  newnc.createVariable('latitude', 'f', ('latitude',))
-  newnc.createVariable('discharge', 'd', ('t', 'latitude', 'longitude'))
-  newnc.variables['t'][:] = t
-  newnc.variables['longitude'][:] = elons
-  newnc.variables['latitude'][:] = lats
-  newnc.variables['discharge'][:] = np.array(Qout)
-  newnc.close()
+    # Towards netcdf export
+    #newnc = NetCDFFile('test2.nc', 'w')
+    #shutil.copyfile('qrparm.waterfix.hadcm3_bbc15ka.nc', dst)
+    newnc = NetCDFFile(outname, 'w')
+    newnc.createDimension('t', len(t))
+    newnc.createDimension('longitude', len(elons))
+    newnc.createDimension('latitude', len(lats))
+    newnc.createVariable('t', 'i', ('t',))
+    newnc.createVariable('longitude', 'f', ('longitude',))
+    newnc.createVariable('latitude', 'f', ('latitude',))
+    newnc.createVariable('discharge', 'd', ('t', 'latitude', 'longitude'))
+    newnc.variables['t'][:] = t
+    newnc.variables['longitude'][:] = elons
+    newnc.variables['latitude'][:] = lats
+    newnc.variables['discharge'][:] = np.array(Qout)
+    newnc.close()
 
   ii += 1
 
-print ""
-print "*****"
-print ii/float(len(ncfiles_for_mask__name)) * 100, '%'
-print "*****"
-print ""
+  print ""
+  print "*****"
+  print ii/float(len(ncfiles_for_mask__name)) * 100, '%'
+  print "*****"
+  print ""
 
