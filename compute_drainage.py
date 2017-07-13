@@ -483,6 +483,7 @@ def build_basins_rast(self, river_name=None):
 
   self.rivers = np.array(list(set(list(grass.parse_command('v.db.select', map='river_mouth_regions', columns='river', flags="c")))))
   #self.rnum = np.array(list(set(list(grass.parse_command('v.db.select', map='river_mouth_regions', columns='rnum', flags="c"))))).astype(int).astype(int)
+  # NOTE -- change this to river number that is actually stored in the database table!
   self.rnum = np.arange(1,len(self.rivers)+1)
 
   grass.run_command('g.region', rast='ice_000000') # Just in case it was changed while running the code before
