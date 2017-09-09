@@ -34,7 +34,7 @@ def cellArea(self):
   Create a map of cell areas in square meters
   Already done as part of standard initial import
   """  
-  grass.mapcalc("area_meters2 = ( 111133. * nsres() ) * ( ewres() * (3.14159/180.) * 6371000. * cos(y()) )")
+  grass.mapcalc("area_meters2 = ( 111195. * nsres() ) * ( ewres() * (3.14159/180.) * 6371000. * cos(y()) )")
 
 def adjacentAverage(self, array):
   """
