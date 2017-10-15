@@ -11,5 +11,6 @@ Subfolders include:
 * Code to generate input files for this program (gridImport)
 * Input files with time-steps (input)
 
-Reference:
-Reconstruction of North American drainage basins and river discharge since the Last Glacial Maximum: http://www.earth-surf-dynam-discuss.net/esurf-2016-8/
+### Reference:
+
+**Wickert, A. D. (2016), [Reconstruction of North American drainage basins and river discharge since the Last Glacial Maximum](https://www.earth-surf-dynam.net/4/831/2016/esurf-4-831-2016.html), *Earth Surf. Dynam.*, *4*, 831-869, doi:10.5194/esurf-4-831-2016.**
